@@ -12,23 +12,38 @@ services:
     ports:
       - 80:80
     volumes:
-      - ./src:/var/www/php
+      - ./src/backend:/var/www/backend
       - ./.docker/nginx/conf.d:/etc/nginx/conf.d
+      - phpmyadmindata:/var/www/phpmyadmin
     depends_on:
-      - php
+      - backend
+      - frontend
+      - phpmyadmin
 
-  # PHP service
-  php:
+  # Backend service
+  backend:
     build:
       context: ./bin
-      dockerfile: Dockerfile-php
-    container_name: webdev-php
-    working_dir: /var/www/php
+      dockerfile: Dockerfile-backend
+    container_name: webdev-backend
+    working_dir: /var/www/backend
     volumes:
-      - ./src:/var/www/php
+      - ./src/backend:/var/www/backend
     depends_on:
       mysql:
         condition: service_healthy
+
+  # Frontend service
+  frontend:
+    build:
+      context: ./bin
+      dockerfile: Dockerfile-frontend
+    container_name: webdev-frontend
+    working_dir: /var/www/frontend
+    volumes:
+      - ./src/frontend:/var/www/frontend
+    depends_on:
+      - backend
 
   # MySQL service
   mysql:
@@ -57,9 +72,12 @@ services:
       - 8080:80
     environment:
       PMA_HOST: mysql
+    volumes:
+      - phpmyadmindata:/var/www/html
     depends_on:
       mysql:
         condition: service_healthy
 
 volumes:
   mysqldata:
+  phpmyadmindata:
